@@ -26,7 +26,6 @@ public class StaticDropDowns {
 		
 		System.setProperty("web.driver.chrome","I://drivers//chromedriver.exe");
 		driver = new ChromeDriver();
-		
 		driver.get("https://rahulshettyacademy.com/dropdownsPractise/");
 		WebElement currencyDropdown = driver.findElement(By.id("ctl00_mainContent_DropDownListCurrency"));
 		Select dropdown = new Select(currencyDropdown);
@@ -35,10 +34,7 @@ public class StaticDropDowns {
 		dropdown.selectByValue("AED");
 		dropdown.selectByContainsVisibleText("INR");
 		System.out.println(dropdown.getFirstSelectedOption().getText());
-		
-		
 		driver.close();
-
 		System.out.println("program ended..!");
 	}
 
