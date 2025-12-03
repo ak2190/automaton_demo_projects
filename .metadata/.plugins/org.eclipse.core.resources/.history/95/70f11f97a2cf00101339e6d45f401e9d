@@ -1,0 +1,23 @@
+package webElements;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+public class StaticDropDowns {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		WebDriver driver = null;
+		
+		
+		System.setProperty("web.driver.chrome","I://drivers//chromedriver.exe")
+		driver = new ChromeDriver();
+		
+		driver.get("https://rahulshettyacademy.com/dropdownsPractise/");
+		
+		driver.close();
+
+	}
+
+}

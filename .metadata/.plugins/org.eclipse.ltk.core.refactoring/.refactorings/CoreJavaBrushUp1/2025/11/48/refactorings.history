@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move element &apos;Locators.java&apos; to &apos;Introduction/src/main/java/test&apos;&#x0D;&#x0A;- Original project: &apos;CoreJavaBrushUp1&apos;&#x0D;&#x0A;- Destination element: &apos;Introduction/src/main/java/test&apos;&#x0D;&#x0A;- Original element: &apos;Locators.java&apos;&#x0D;&#x0A;- Update references to refactored element" description="Move compilation unit" destination="=Introduction/src\/main\/java=/optional=/true=/=/maven.pomderived=/true=/&lt;test" element1="/src&lt;{Locators.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1764439615394" units="1" version="1.0"/>
+</session>

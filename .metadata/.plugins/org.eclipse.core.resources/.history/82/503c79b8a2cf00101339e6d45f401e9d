@@ -1,0 +1,28 @@
+package webElements;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+public class StaticDropDowns {
+	
+	// reduce noisy selenium/http logs
+    Logger.getLogger("org.openqa.selenium").setLevel(Level.SEVERE);
+    Logger.getLogger("org.openqa.selenium.remote.http.WebSocket").setLevel(Level.SEVERE);
+    Logger.getLogger("jdk.internal.net.http").setLevel(Level.SEVERE);
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		WebDriver driver = null;
+		
+		
+		System.setProperty("web.driver.chrome","I://drivers//chromedriver.exe");
+		driver = new ChromeDriver();
+		
+		driver.get("https://rahulshettyacademy.com/dropdownsPractise/");
+		
+		driver.close();
+
+	}
+
+}
