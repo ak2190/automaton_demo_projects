@@ -1,33 +1,100 @@
 package qamarvel.framework.base;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.Cookie;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.PageFactory;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
 
+import qamarvel.framework.auth.session.SessionManager;
+import qamarvel.framework.auth.session.SessionStore;
+import qamarvel.framework.config.ConfigReader;
 import qamarvel.framework.driver.DriverFactory;
+import qamarvel.pageObjects.LoginPage;
 
-public class BasePage_deprecated {
+public  class BasePage_deprecated {
 
-    protected WebDriver driver;
+	protected WebDriver driver;
 
-    public BasePage_deprecated() {
-        this.driver = DriverFactory.getDriver();
-        PageFactory.initElements(driver, this);
-    }
-    
-    public String getScreenshot(String testCaseName,WebDriver driver) throws IOException
-	{
-		TakesScreenshot ts = (TakesScreenshot)driver;
-		File source = ts.getScreenshotAs(OutputType.FILE);
-		File file = new File(System.getProperty("user.dir") + "//reports//" + testCaseName + ".png");
-		FileUtils.copyFile(source, file);
-		return System.getProperty("user.dir") + "//reports//" + testCaseName + ".png";
+	/*
+	 * ===================================================== SUITE-LEVEL AUTH
+	 * SESSION (RUNS ONCE) =====================================================
+	 */
+	@BeforeSuite(alwaysRun = true)
+	public void initializeAuthSession() {
+
+		if (SessionStore.isInitialized()) {
+			return;
+		}
+
+		WebDriver setupDriver = null;
+
+		try {
+			DriverFactory.initDriver();
+			setupDriver = DriverFactory.getDriver();
+			setupDriver.get(ConfigReader.get("baseUrl"));
+			LoginPage loginPage = new LoginPage(setupDriver);
+			loginPage.login(ConfigReader.get("username"), ConfigReader.get("password"));
 		
-		
+			SessionManager.captureSession(setupDriver);
+			
+			Set<Cookie> cookies = setupDriver.manage().getCookies();
+
+			System.out.println("===== COOKIES AFTER UI LOGIN =====");
+			for (Cookie cookie : cookies) {
+			    System.out.println(
+			        cookie.getName() + " = " + cookie.getValue()
+			    );
+			}
+			
+			JavascriptExecutor js = (JavascriptExecutor) setupDriver;
+
+			System.out.println("===== LOCAL STORAGE =====");
+			System.out.println(
+			    js.executeScript("return window.localStorage;")
+			);
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			DriverFactory.quitDriver();
+		}
+	}
+
+	/*
+	 * =======TEST-LEVEL DRIVER SETUP
+	 * (RUNS PER TEST) ====================
+	 */
+	@BeforeTest(alwaysRun = true)
+	public void setUp() {
+
+		DriverFactory.initDriver();
+		driver = DriverFactory.getDriver();
+
+		// Inject authenticated session
+		// SessionManager.injectSession(driver, ConfigReader.get("baseUrl"));
+		SessionManager.injectSession(driver, ConfigReader.get("DashboardUrl"));
+
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	/*
+	 * ===================================================== CLEANUP
+	 * =====================================================
+	 */
+	@AfterTest(alwaysRun = true)
+	public void tearDown() {
+
+		DriverFactory.quitDriver();
 	}
 }

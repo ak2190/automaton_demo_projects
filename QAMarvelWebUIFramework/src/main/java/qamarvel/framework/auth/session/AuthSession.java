@@ -1,4 +1,4 @@
-package qamarvel.framework.session;
+package qamarvel.framework.auth.session;
 
 import org.openqa.selenium.Cookie;
 import java.util.Map;
@@ -6,6 +6,7 @@ import java.util.Set;
 
 public class AuthSession {
 
+	
     private Set<Cookie> cookies;
     private Map<String, String> localStorage;
     private Map<String, String> sessionStorage;

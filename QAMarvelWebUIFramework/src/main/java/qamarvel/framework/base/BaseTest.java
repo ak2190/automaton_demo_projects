@@ -1,15 +1,24 @@
 package qamarvel.framework.base;
 
+import java.util.Set;
+import org.openqa.selenium.Cookie;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
-
+import qamarvel.framework.auth.AuthState;
+import qamarvel.framework.auth.acquire.AuthAcquirer;
+import qamarvel.framework.auth.acquire.ApiAuthAcquirer;
+import qamarvel.framework.auth.apply.AuthApplier;
+import qamarvel.framework.auth.apply.HeaderAuthApplier;
+import qamarvel.framework.auth.apply.LocalStorageAuthApplier;
+import qamarvel.framework.auth.verify.DashboardAuthVerifier; 
+import qamarvel.framework.auth.verify.AuthVerifier;
+import qamarvel.framework.auth.session.SessionManager;
+import qamarvel.framework.auth.session.SessionStore;
 import qamarvel.framework.config.ConfigReader;
 import qamarvel.framework.driver.DriverFactory;
-import qamarvel.framework.session.SessionManager;
-import qamarvel.framework.session.SessionStore;
 import qamarvel.pageObjects.LoginPage;
 
 public abstract class BaseTest {
@@ -32,28 +41,25 @@ public abstract class BaseTest {
 		try {
 			DriverFactory.initDriver();
 			setupDriver = DriverFactory.getDriver();
-
 			setupDriver.get(ConfigReader.get("baseUrl"));
-
 			LoginPage loginPage = new LoginPage(setupDriver);
 			loginPage.login(ConfigReader.get("username"), ConfigReader.get("password"));
-			
-			Thread.sleep(5000);
 
-			  // 🔍 DEBUG: verify auth exists BEFORE capture
-	        System.out.println("AFTER LOGIN");
-	        System.out.println("Cookies: " + setupDriver.manage().getCookies().size());
-	        System.out.println("LocalStorage size: " +
-	                ((JavascriptExecutor) setupDriver)
-	                        .executeScript("return window.localStorage.length;"));
 			SessionManager.captureSession(setupDriver);
-			
-			System.out.println("Cookies: " + driver.manage().getCookies().size());
-			System.out.println("LocalStorage size: " +
-			    ((JavascriptExecutor)driver)
-			        .executeScript("return window.localStorage.length;"));
 
-		} catch (InterruptedException e) {
+			Set<Cookie> cookies = setupDriver.manage().getCookies();
+
+			System.out.println("===== COOKIES AFTER UI LOGIN =====");
+			for (Cookie cookie : cookies) {
+				System.out.println(cookie.getName() + " = " + cookie.getValue());
+			}
+
+			JavascriptExecutor js = (JavascriptExecutor) setupDriver;
+
+			System.out.println("===== LOCAL STORAGE =====");
+			System.out.println(js.executeScript("return window.localStorage;"));
+
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
@@ -62,28 +68,49 @@ public abstract class BaseTest {
 	}
 
 	/*
-	 * ===================================================== TEST-LEVEL DRIVER SETUP
-	 * (RUNS PER TEST) =====================================================
+	 * =======TEST-LEVEL DRIVER SETUP (RUNS PER TEST) ====================
 	 */
 	@BeforeTest(alwaysRun = true)
-    public void setUp() {
+	public void setUp() {
 
-        DriverFactory.initDriver();
-        driver = DriverFactory.getDriver();
+		DriverFactory.initDriver();
+		driver = DriverFactory.getDriver();
 
-        // Inject authenticated session
-       // SessionManager.injectSession(driver, ConfigReader.get("baseUrl"));
-        SessionManager.injectSession(driver,ConfigReader.get("DashboardUrl"));
-       
-                
-                try {
-					Thread.sleep(5000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-       
-    }
+		String authMode = ConfigReader.get("auth.mode");
+		// Inject authenticated session
+		// SessionManager.injectSession(driver, ConfigReader.get("baseUrl"));
+		if ("SESSION".equalsIgnoreCase(authMode)) {
+
+			// ✅ existing behavior (unchanged)
+			SessionManager.injectSession(driver, ConfigReader.get("DashboardUrl"));
+
+		} else if ("API_HEADER".equalsIgnoreCase(authMode)) {
+
+			// 🚀 new path (no session reuse)
+			AuthAcquirer acquirer = new ApiAuthAcquirer();
+		    AuthApplier applier = new LocalStorageAuthApplier();
+			
+			AuthState state = acquirer.acquire();
+			 // 1️⃣ Blank page (no app JS yet)
+			driver.get("https://rahulshettyacademy.com");
+		    
+		    // 2️⃣ Inject auth BEFORE app loads
+		    applier.apply(driver, state);
+
+		    // 3️⃣ Load the application
+
+
+		    driver.get(ConfigReader.get("DashboardUrl"));
+
+		    // 4️⃣ Verify authenticated state
+		    AuthVerifier verifier = new DashboardAuthVerifier();
+		    verifier.verify(driver);
+
+		} else {
+
+			throw new RuntimeException("Unsupported auth.mode: " + authMode);
+		}
+	}
 
 	/*
 	 * ===================================================== CLEANUP
